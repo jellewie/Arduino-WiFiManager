@@ -38,7 +38,6 @@ char password[WiFiManager_EEPROM_SIZE / 2] = "";
 byte WiFiManager_Start() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(WiFiManager_LED, HIGH);
-  WiFiManager_ClearEEPROM();
   //starts wifi stuff, only returns when connected. will create Acces Point when needed
   /* <Return> <meaning>
      2 Can't begin EEPROM
