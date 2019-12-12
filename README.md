@@ -1,6 +1,9 @@
 # Arduino-WiFiManager
  ESP32 WiFiManager sketch
 
+# what you need
+[ESP32](https://dl.espressif.com/dl/package_esp32_index.json)
+
 # How it works
 Call "WiFiManager_Start()" to start, this will:
 1) Load hardcoded WIFI data (already there on boot)
