@@ -1,3 +1,7 @@
+/*
+  Program written by JelleWho
+  Board: https://dl.espressif.com/dl/package_esp32_index.json
+*/
 #include <WiFi.h>             //we need this for wifi stuff (duh)
 
 void setup() {
