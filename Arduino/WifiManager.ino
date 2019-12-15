@@ -16,11 +16,10 @@
    You can use "strip_ip, gateway_ip, subnet_mask" to set a static connection
 
    HOW TO ADD CUSTOM CALUES
-   -Add the name to "WiFiManager_VariableNames"
-   -Make sure "WiFiManager_EEPROM_SIZE" is big enough, if it's 10 and you have 2 settings (SSID, Password) than both get 10/2=5 bytes of storage, probably not enough (1 byte = 1 character)
-   -Add the data to "StringToWrite" in "WiFiManager_WriteEEPROM" to save it to EEPROM (with "Seperator" between values!)
-   -Set the action in "WiFiManager_Set_Value" on what to do on startup with this value
-   -[optional] Set the action on "WiFiManager_Get_Value" on what to fill in in the boxes in the AP settings portal
+   -"WiFiManager_VariableNames" Add the 'AP settings portal' name
+   -"WiFiManager_EEPROM_SIZE"   [optional] Make sure it is big enough; if it's 10 and you have 2 settings (SSID, Password) than both get 10/2=5 bytes of storage, probably not enough (1 byte = 1 character)
+   -"WiFiManager_Set_Value"     Set the action on what to do on startup with this value
+   -"WiFiManager_Get_Value"     [optional] Set the action on what to fill in in the boxes in the 'AP settings portal'
 */
 
 #define WiFiManager_ConnectionTimeOutMS 10000
@@ -56,22 +55,26 @@ byte WiFiManager_Start() {
   if (!EEPROM.begin(WiFiManager_EEPROM_SIZE))
     return 2;
   String WiFiManager_a = WiFiManager_LoadEEPROM();
+  //Serial.println("EEPROM data=" + WiFiManager_a);
   if (WiFiManager_a != String(WiFiManager_EEPROM_Seperator)) {    //If there is data in EEPROM
     for (byte i = 0; i < WiFiManager_Settings; i++) {
       byte j = WiFiManager_a.indexOf(char(WiFiManager_EEPROM_Seperator));
       if (j == 255)
         j = WiFiManager_a.length();
-      WiFiManager_Set_Value(i, WiFiManager_a.substring(0, j));
+      String WiFiManager_TEMP_Value = WiFiManager_a.substring(0, j);
+      if (WiFiManager_TEMP_Value != "")                     //If there is a value
+        WiFiManager_Set_Value(i, WiFiManager_TEMP_Value);   //set the value in memory (and thus overwrite the Hardcoded stuff)
       WiFiManager_a = WiFiManager_a.substring(j + 1);
     }
   }
-  bool WiFiManager_APModeUsed;
+  bool WiFiManager_APModeUsed = false;
   bool WiFiManager_Connected = false;
   while (!WiFiManager_Connected) {
     if ((strlen(ssid) == 0 or strlen(password) == 0)) {
       WiFiManager_APModeUsed = true;
       WiFiManager_APMode();                 //No good ssid or password, entering APmode
     } else {
+      //Serial.println("Connect to " + String(ssid) + " and " + String(password));
       if (WiFiManager_Connect(10000))     //try to connected to ssid password
         WiFiManager_Connected = true;
       else
@@ -79,7 +82,7 @@ byte WiFiManager_Start() {
     }
   }
   if (WiFiManager_APModeUsed) {
-    if (!WiFiManager_WriteEEPROM(String(ssid), String(password)))
+    if (!WiFiManager_WriteEEPROM())
       return 3;
   }
   digitalWrite(WiFiManager_LED, LOW);
@@ -98,11 +101,14 @@ String WiFiManager_LoadEEPROM() {
   }
   return String(WiFiManager_EEPROM_Seperator);    //ERROR; [maybe] not enough space
 }
-bool WiFiManager_WriteEEPROM(String WiFiManager_TempSSID, String WiFiManager_TempPassword) {
-  String StringToWrite = WiFiManager_TempSSID;                                //Save to mem: <SSID>
-  StringToWrite += WiFiManager_EEPROM_Seperator + WiFiManager_TempPassword;   //^            <Seperator><Password>
-  StringToWrite += char(255);                                                 //^            <emthy bit>
-  //(we use a emthy bit to mark the end)
+bool WiFiManager_WriteEEPROM() {
+  String StringToWrite;                               //Save to mem: <SSID>
+  for (byte i = 0; i < WiFiManager_Settings; i++) {
+    StringToWrite += WiFiManager_Get_Value(i, true); //^            <Seperator>
+    if (WiFiManager_Settings - i > 1)
+      StringToWrite += WiFiManager_EEPROM_Seperator;  //^            <Value>  (only if there more values)
+  }
+  StringToWrite += char(255);                         //^            <emthy bit> (we use a emthy bit to mark the end)
   if (StringToWrite.length() > WiFiManager_EEPROM_SIZE)   //If nog enough room in the EEPROM
     return false;                                         //Return false; not all data is stored
   for (int i = 0; i < StringToWrite.length(); i++)        //For each character to save
@@ -116,12 +122,13 @@ byte WiFiManager_APMode() {
      2 soft-AP setup Failed
      3
   */
-  //Serial.println("APMode ON");
+  //Serial.println("APMode SETTING UP");
   if (!WiFi.softAP(WiFiManager_APSSID))
     return 2;
   WiFiServer WiFiManager_server(80);
   WiFiManager_server.begin();
   bool WiFiManager_Looping = true;
+  //Serial.println("APMode ON");
   while (WiFiManager_Looping) {
     WiFiManager_Blink(100);  //Let the LED blink to show we are not connected
     WiFiClient client = WiFiManager_server.available();
@@ -178,9 +185,8 @@ byte WiFiManager_APMode() {
               client.println();                         //Then a blank line
 
               client.print("<div>ESP32 settings</div><form action=\"/set?a=1&amp;b=2\" method=\"get\">");
-              for (byte i = 0; i < WiFiManager_Settings; i++) {
-                client.print("<div><label for=\"" + WiFiManager_VariableNames[i] + "\">" + WiFiManager_VariableNames[i] + "</label> <input name=\"" + i + "\" type=\"text\" value=\"" + WiFiManager_Get_Value(i) + "\" /></div>");
-              }
+              for (byte i = 0; i < WiFiManager_Settings; i++)
+                client.print("<div><label for=\" " + WiFiManager_VariableNames[i] + "\"> " + WiFiManager_VariableNames[i] + "</label> <input name=\"" + i + "\" type=\"text\" value=\"" + WiFiManager_Get_Value(i, false) + "\" /></div>");
               client.print("<div><button>Send</button></div></form>");
             }
             client.stop();
@@ -217,6 +223,7 @@ void WiFiManager_Blink(int WiFiManager_Temp_Delay) {
 }
 void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
   //Serial.println("Set value " + String(WiFiManager_ValueID) + " = " + WiFiManager_Temp);
+  WiFiManager_Temp.trim();                  //remove leading and trailing whitespace
   switch (WiFiManager_ValueID) {
     case 0:
       WiFiManager_Temp.toCharArray(ssid, WiFiManager_Temp.length() + 1);
@@ -226,17 +233,19 @@ void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
       break;
   }
 }
-String WiFiManager_Get_Value(byte WiFiManager_ValueID) {
-  //Serial.println("Get value " + String(WiFiManager_ValueID) + " while ssid=" + String(ssid));
+String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe) {
+  //Serial.println("Get value " + String(WiFiManager_ValueID));
+  String WiFiManager_Temp_Return = "";                //Make sure to return something, if we return bad data of NULL, the HTML page will break
   switch (WiFiManager_ValueID) {
     case 0:
-      return String(ssid);
+      WiFiManager_Temp_Return += String(ssid);
       break;
     case 1:
-      return String("");  //Do not return "password" for safety (and it's problably cleared anyway)
+      if (WiFiManager_Safe)                           //If's it's safe to return password.
+        WiFiManager_Temp_Return += String(password);
       break;
   }
-  return "";
+  return String(WiFiManager_Temp_Return);      
 }
 //Some debug functions
 //void WiFiManager_ClearEEPROM() {
