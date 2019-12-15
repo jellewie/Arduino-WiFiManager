@@ -8,29 +8,39 @@
 
    TODO
    give website feedback if error or something??
-   Do EEPROM_SIZE check before writing (and ssid and password size check)
 
    DO NOT USE:
    Prefix 'WiFiManager' for anything
    Global variables of 'i' 'j' 'k' 'client'
 
    You can use "strip_ip, gateway_ip, subnet_mask" to set a static connection
+
+   HOW TO ADD CUSTOM CALUES
+   -Add the name to "WiFiManager_VariableNames"
+   -Make sure "WiFiManager_EEPROM_SIZE" is big enough, if it's 10 and you have 2 settings (SSID, Password) than both get 10/2=5 bytes of storage, probably not enough (1 byte = 1 character)
+   -Add the data to "StringToWrite" in "WiFiManager_WriteEEPROM" to save it to EEPROM (with "Seperator" between values!)
+   -Set the action in "WiFiManager_Set_Value" on what to do on startup with this value
+   -[optional] Set the action on "WiFiManager_Get_Value" on what to fill in in the boxes in the AP settings portal
 */
 
 #define WiFiManager_ConnectionTimeOutMS 10000
 #define WiFiManager_APSSID "ESP32"
-#define WiFiManager_EEPROM_SIZE 64    //Max Amount of chars of 'SSID+PASSWORD' (+1)
+#define WiFiManager_EEPROM_SIZE 64    //Max Amount of chars of 'SSID+PASSWORD' (+1) (+extra custom vars)
 #define WiFiManager_EEPROM_Seperator char(9)  //use 'TAB' as a seperator 
 #define WiFiManager_LED LED_BUILTIN
+
+const String WiFiManager_VariableNames[] {"SSID", "Password"};
+const static byte WiFiManager_Settings = sizeof(WiFiManager_VariableNames) / sizeof(WiFiManager_VariableNames[0]); //Why filling this in if we can automate that? :)
+const static byte WiFiManager_EEPROM_SIZE_EACH = WiFiManager_EEPROM_SIZE / WiFiManager_Settings;
 
 //#define strip_ip, gateway_ip, subnet_mask to use static IP
 
 #ifndef ssid
-char ssid[WiFiManager_EEPROM_SIZE / 2] = "";
+char ssid[WiFiManager_EEPROM_SIZE_EACH] = "test";
 #endif //ssid
 
 #ifndef password
-char password[WiFiManager_EEPROM_SIZE / 2] = "";
+char password[WiFiManager_EEPROM_SIZE_EACH] = "";
 #endif //password
 
 #include <EEPROM.h>
@@ -47,23 +57,25 @@ byte WiFiManager_Start() {
     return 2;
   String WiFiManager_a = WiFiManager_LoadEEPROM();
   if (WiFiManager_a != String(WiFiManager_EEPROM_Seperator)) {    //If there is data in EEPROM
-    int i = WiFiManager_a.indexOf(char(WiFiManager_EEPROM_Seperator));
-    if (i > 0)
-      WiFiManager_SaveSSIDPassword(WiFiManager_a.substring(0, i), WiFiManager_a.substring(i + 1));
+    for (byte i = 0; i < WiFiManager_Settings; i++) {
+      byte j = WiFiManager_a.indexOf(char(WiFiManager_EEPROM_Seperator));
+      if (j == 255)
+        j = WiFiManager_a.length();
+      WiFiManager_Set_Value(i, WiFiManager_a.substring(0, j));
+      WiFiManager_a = WiFiManager_a.substring(j + 1);
+    }
   }
   bool WiFiManager_APModeUsed;
   bool WiFiManager_Connected = false;
   while (!WiFiManager_Connected) {
-    if ((strlen(ssid) != 0 or strlen(password) != 0)) {
-      if (WiFiManager_Connect(10000)) { //try to connected to ssid password
-        WiFiManager_Connected = true;
-      } else {
-        ssid[0] = (char)0;                  //Clear these so we will enter AP mode (*just clearing first bit)
-        password[0] = (char)0;              //Clear these so we will enter AP mode
-      }
-    } else {
+    if ((strlen(ssid) == 0 or strlen(password) == 0)) {
       WiFiManager_APModeUsed = true;
       WiFiManager_APMode();                 //No good ssid or password, entering APmode
+    } else {
+      if (WiFiManager_Connect(10000))     //try to connected to ssid password
+        WiFiManager_Connected = true;
+      else
+        password[0] = (char)0;              //Clear this so we will enter AP mode (*just clearing first bit)
     }
   }
   if (WiFiManager_APModeUsed) {
@@ -87,7 +99,9 @@ String WiFiManager_LoadEEPROM() {
   return String(WiFiManager_EEPROM_Seperator);    //ERROR; [maybe] not enough space
 }
 bool WiFiManager_WriteEEPROM(String WiFiManager_TempSSID, String WiFiManager_TempPassword) {
-  String StringToWrite = WiFiManager_TempSSID + WiFiManager_EEPROM_Seperator + WiFiManager_TempPassword + char(255);  //Save to mem: <SSID><Seperator><Password><emthy bit>
+  String StringToWrite = WiFiManager_TempSSID;                                //Save to mem: <SSID>
+  StringToWrite += WiFiManager_EEPROM_Seperator + WiFiManager_TempPassword;   //^            <Seperator><Password>
+  StringToWrite += char(255);                                                 //^            <emthy bit>
   //(we use a emthy bit to mark the end)
   if (StringToWrite.length() > WiFiManager_EEPROM_SIZE)   //If nog enough room in the EEPROM
     return false;                                         //Return false; not all data is stored
@@ -96,17 +110,13 @@ bool WiFiManager_WriteEEPROM(String WiFiManager_TempSSID, String WiFiManager_Tem
   EEPROM.commit();
   return true;
 }
-void WiFiManager_SaveSSIDPassword(String WiFiManager_TempSSID, String WiFiManager_TempPassword) {
-  WiFiManager_TempSSID.toCharArray(ssid, WiFiManager_TempSSID.length() + 1);
-  WiFiManager_TempPassword.toCharArray(password, WiFiManager_TempPassword.length() + 1);
-}
 byte WiFiManager_APMode() {
   //IP of AP = 192.168.4.1
   /* <Return> <meaning>
      2 soft-AP setup Failed
      3
   */
-
+  //Serial.println("APMode ON");
   if (!WiFi.softAP(WiFiManager_APSSID))
     return 2;
   WiFiServer WiFiManager_server(80);
@@ -117,81 +127,62 @@ byte WiFiManager_APMode() {
     WiFiClient client = WiFiManager_server.available();
     if (client) {
       //Serial.println("New Client.");
-      String WiFiManager_TempInput;
+      String WiFiManager_Temp_Input;
       while (client.connected()) {
         if (client.available()) {
           char WiFiManager_c = client.read();               //read char by char HTTP request
-          if (WiFiManager_TempInput.length() < 100)
-            WiFiManager_TempInput += WiFiManager_c;                     //store characters to string
+          if (WiFiManager_Temp_Input.length() < 100)
+            WiFiManager_Temp_Input += WiFiManager_c;                     //store characters to string
           if (WiFiManager_c == '\n') {                      //if HTTP request has ended
-            //Serial.println(WiFiManager_TempInput);          //print to serial monitor for debuging
-            if (WiFiManager_TempInput.indexOf('?') >= 0) {  //don't send new page
+            //Serial.println(WiFiManager_Temp_Input);          //print to serial monitor for debuging
+            if (WiFiManager_Temp_Input.indexOf('?') >= 0) {  //don't send new page
               client.println("HTTP/1.1 204 JelleWie\r\n\r\n");
 
               //This parts cuts the string and feedbacks the inputs
               //for example 'GET /set?Var1=Hhh&Var2=Yesi HTTP/1.1'
-              //            'GET /<command>?<VariableName>=<Value>[&<VariableName2>=<Value2>]'  (where [] is opt)
+              //            'GET /<command>?<VariableID>=<Value>[&<VariableID2>=<Value2>]'  (where [] is opt)
               //Caps gets ignored, do not use these in names: '=' '?' ' '  '&' We use them to seperate inputs
-              //Serial.println("_full_" + WiFiManager_TempInput);
-              int i = WiFiManager_TempInput.indexOf(" ");
+              //Serial.println("_full_" + WiFiManager_Temp_Input);
+
+              int i = WiFiManager_Temp_Input.indexOf(" ");
               if (i > 0)
-                WiFiManager_TempInput = WiFiManager_TempInput.substring(i + 1); //Remove prefix "GET " (including ' ')
-              i = WiFiManager_TempInput.indexOf(" ");
+                WiFiManager_Temp_Input = WiFiManager_Temp_Input.substring(i + 1); //Remove prefix "GET " (including ' ')
+              i = WiFiManager_Temp_Input.indexOf(" ");
               if (i > 0)
-                WiFiManager_TempInput = WiFiManager_TempInput.substring(0, i);      //Remove suffix " HTTP/1.1"
-              String WiFiManager_command;                               //We need this here, since we need to access it in this {}
-              i = WiFiManager_TempInput.indexOf("?");
+                WiFiManager_Temp_Input = WiFiManager_Temp_Input.substring(0, i);  //Remove suffix " HTTP/1.1"
+              String WiFiManager_command;                                         //We need this here, since we need to access it in this {}
+              i = WiFiManager_Temp_Input.indexOf("?");
               if (i > 0) {
-                WiFiManager_command = WiFiManager_TempInput.substring(1, i);        //Get command "set" (excluding '/' and '?')
-                WiFiManager_TempInput = WiFiManager_TempInput.substring(i + 1);     //Remove command "/set?" (including '?')
+                WiFiManager_command = WiFiManager_Temp_Input.substring(1, i);     //Get command "set" (excluding '/' and '?')
+                WiFiManager_Temp_Input = WiFiManager_Temp_Input.substring(i + 1); //Remove command "/set?" (including '?')
               }
+
               if (WiFiManager_command == "set") {
-                i = WiFiManager_TempInput.indexOf("=");
-                String WiFiManager_Temp_SSID;
-                String WiFiManager_Temp_Password;
-                while (i > 0) {
-                  int j = WiFiManager_TempInput.indexOf("&");
-                  String k, l;
-                  if (j > 0) {                                          //If there more commands
-                    l = WiFiManager_TempInput.substring(0, i);            //Get variable name "Var1"
-                    k = WiFiManager_TempInput.substring(i + 1, j);  //Get first value variable "Hhh"
-                    WiFiManager_TempInput = WiFiManager_TempInput.substring(j);     //Remove first var  "Var1=Hhh&" (including '&')
-                  } else {
-                    l = WiFiManager_TempInput.substring(1, i);            //Get variable name "Var2"
-                    k = WiFiManager_TempInput.substring(i + 1);           //Get second value variable "Yesi"
-                    WiFiManager_TempInput = "";                           //No more commands, clear it so we stop
-                  }
-                  //Serial.println("'" + l + "'='" + k + "'");            //Debug all commands
-                  l.toLowerCase();                                        //Convert to lowerCase so we are not CaPs SeNsAtIvE
-                  if (l == "ssid")
-                    WiFiManager_Temp_SSID = k;
-                  else if (l == "password")
-                    WiFiManager_Temp_Password = k;
-                  i = WiFiManager_TempInput.indexOf("=");
+                for (byte i = 0; i < WiFiManager_Settings; i++) {
+                  byte j = WiFiManager_Temp_Input.indexOf("&");
+                  if (j == 255)
+                    j = WiFiManager_Temp_Input.length();
+                  byte k = WiFiManager_Temp_Input.indexOf("=");
+                  if (k < 255)
+                    WiFiManager_Set_Value(WiFiManager_Temp_Input.substring(0, k).toInt(), WiFiManager_Temp_Input.substring(k + 1, j));
+                  WiFiManager_Temp_Input = WiFiManager_Temp_Input.substring(j + 1); //Remove command
                 }
-                //Serial.println("SSID='" + WiFiManager_Temp_SSID + "' Password='" + WiFiManager_Temp_Password + "'");    //Debug
-                WiFiManager_SaveSSIDPassword(WiFiManager_Temp_SSID, WiFiManager_Temp_Password);
                 WiFiManager_Looping = false;
               } else {
                 //Serial.println("Unknown command '" + WiFiManager_command + "'");
               }
-            }
-            else {
-              // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-              // and a content-type so the client knows what's coming, then a blank line:
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:text/html");
-              client.println("Connection: close");
-              client.println();
+            } else {
+              client.println("HTTP/1.1 200 OK");        //HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+              client.println("Content-type:text/html"); //And a content-type so the client knows what's coming
+              client.println("Connection: close");      //
+              client.println();                         //Then a blank line
 
-              client.print("<div>ESPNAME</div>");
-              client.print("<form action=\"/set?a=1&amp;b=2\" method=\"get\">");
-              client.print("<div><label for=\"SSID\">SSID</label> <input name=\"SSID\" type=\"text\" value=\"\" /></div>");
-              client.print("<div><label for=\"Password\">Password</label> <input name=\"Password\" type=\"text\" value=\"\" /></div>");
-              client.print("<div><button>Send</button></div>");
-              client.print("</form>");
+              client.print("<div>ESP32 settings</div><form action=\"/set?a=1&amp;b=2\" method=\"get\">");
+              for (byte i = 0; i < WiFiManager_Settings; i++) {
+                client.print("<div><label for=\"" + WiFiManager_VariableNames[i] + "\">" + WiFiManager_VariableNames[i] + "</label> <input name=\"" + i + "\" type=\"text\" value=\"" + WiFiManager_Get_Value(i) + "\" /></div>");
+              }
+              client.print("<div><button>Send</button></div></form>");
             }
-            delay(1);
             client.stop();
           }
         }
@@ -223,6 +214,29 @@ void WiFiManager_Blink(int WiFiManager_Temp_Delay) {
     LastTime = millis();
     digitalWrite(WiFiManager_LED, !digitalRead(WiFiManager_LED));
   }
+}
+void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
+  //Serial.println("Set value " + String(WiFiManager_ValueID) + " = " + WiFiManager_Temp);
+  switch (WiFiManager_ValueID) {
+    case 0:
+      WiFiManager_Temp.toCharArray(ssid, WiFiManager_Temp.length() + 1);
+      break;
+    case 1:
+      WiFiManager_Temp.toCharArray(password, WiFiManager_Temp.length() + 1);
+      break;
+  }
+}
+String WiFiManager_Get_Value(byte WiFiManager_ValueID) {
+  //Serial.println("Get value " + String(WiFiManager_ValueID) + " while ssid=" + String(ssid));
+  switch (WiFiManager_ValueID) {
+    case 0:
+      return String(ssid);
+      break;
+    case 1:
+      return String("");  //Do not return "password" for safety (and it's problably cleared anyway)
+      break;
+  }
+  return "";
 }
 //Some debug functions
 //void WiFiManager_ClearEEPROM() {
