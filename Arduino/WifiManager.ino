@@ -36,7 +36,7 @@ const static byte WiFiManager_EEPROM_SIZE_EACH = WiFiManager_EEPROM_SIZE / WiFiM
 //#define strip_ip, gateway_ip, subnet_mask to use static IP
 
 #ifndef ssid
-char ssid[WiFiManager_EEPROM_SIZE_EACH] = "test";
+char ssid[WiFiManager_EEPROM_SIZE_EACH] = "";
 #endif //ssid
 
 #ifndef password
