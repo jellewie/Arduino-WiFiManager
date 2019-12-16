@@ -24,9 +24,9 @@
 
 #define WiFiManager_ConnectionTimeOutMS 10000
 #define WiFiManager_APSSID "ESP32"
-#define WiFiManager_EEPROM_SIZE 64    //Max Amount of chars of 'SSID+PASSWORD' (+1) (+extra custom vars)
+#define WiFiManager_EEPROM_SIZE 64            //Max Amount of chars of 'SSID + PASSWORD' (+1) (+extra custom vars)
 #define WiFiManager_EEPROM_Seperator char(9)  //use 'TAB' as a seperator 
-#define WiFiManager_LED LED_BUILTIN
+#define WiFiManager_LED LED_BUILTIN           //The LED to give feedback on (like blink on error)
 #define WiFiManager_SerialEnabled             //Disable to not send Serial debug feedback
 
 const String WiFiManager_VariableNames[] {"SSID", "Password"};
@@ -106,7 +106,7 @@ String WiFiManager_LoadEEPROM() {
     Serial.print("_" + String(char(WiFiManager_Input)) + "_");
 #endif //WiFiManager_SerialEnabled
   }
-  return String(WiFiManager_EEPROM_Seperator);    //ERROR; [maybe] not enough space
+  return String(WiFiManager_EEPROM_Seperator);  //ERROR; [maybe] not enough space
 }
 bool WiFiManager_WriteEEPROM() {
   String StringToWrite;                               //Save to mem: <SSID>
@@ -124,10 +124,13 @@ bool WiFiManager_WriteEEPROM() {
   return true;
 }
 byte WiFiManager_APMode() {
+  //There still seems to be problems with this function:
+  //It doesn't work at all in runmode. and It rarely doesn't work on startup (the webpage doesn't load -> no client is registred - > setup somethimes wrong?)
+  //^ Page will not load, and no errors. also 'client' is always 0
+  
   //IP of AP = 192.168.4.1
   /* <Return> <meaning>
-     2 soft-AP setup Failed
-     3
+    2 soft-AP setup Failed
   */
 #ifdef WiFiManager_SerialEnabled
   Serial.println("APMode setting up");
@@ -143,22 +146,22 @@ byte WiFiManager_APMode() {
 #endif //WiFiManager_SerialEnabled
   while (WiFiManager_Looping) {
     WiFiManager_Blink(100);  //Let the LED blink to show we are not connected
-    WiFiClient client = WiFiManager_server.available();
-    if (client) {
+    WiFiClient client = WiFiManager_server.available();     //Listen for incoming clients
+    if (client) {                                           //If a new client connects,
 #ifdef WiFiManager_SerialEnabled
       Serial.println("New Client.");
 #endif //WiFiManager_SerialEnabled
       String WiFiManager_Temp_Input;
-      while (client.connected()) {
-        if (client.available()) {
+      while (client.connected()) {                          //loop while the client's connected
+        if (client.available()) {                           //If there's bytes to read from the client
           char WiFiManager_c = client.read();               //read char by char HTTP request
           if (WiFiManager_Temp_Input.length() < 100)
-            WiFiManager_Temp_Input += WiFiManager_c;                     //store characters to string
+            WiFiManager_Temp_Input += WiFiManager_c;        //store characters to string
           if (WiFiManager_c == '\n') {                      //if HTTP request has ended
-            if (WiFiManager_Temp_Input.indexOf('?') >= 0) {  //don't send new page
 #ifdef WiFiManager_SerialEnabled
             Serial.println(WiFiManager_Temp_Input);
 #endif //WiFiManager_SerialEnabled
+            if (WiFiManager_Temp_Input.indexOf('?') >= 0) { //don't send new page
               client.println("HTTP/1.1 204 JelleWie\r\n\r\n");
 
               //This parts cuts the string and feedbacks the inputs
@@ -272,7 +275,7 @@ String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe) {
         WiFiManager_Temp_Return += String(password);
       break;
   }
-  return String(WiFiManager_Temp_Return);      
+  return String(WiFiManager_Temp_Return);
 }
 //Some debug functions
 //void WiFiManager_ClearEEPROM() {
