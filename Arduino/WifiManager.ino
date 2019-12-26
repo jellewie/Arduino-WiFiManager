@@ -115,6 +115,9 @@ bool WiFiManager_WriteEEPROM() {
       WiFiManager_StringToWrite += WiFiManager_EEPROM_Seperator;      //^            <Value>  (only if there more values)
   }
   WiFiManager_StringToWrite += char(255);                             //^            <emthy bit> (we use a emthy bit to mark the end)
+#ifdef WiFiManager_SerialEnabled
+  Serial.print("EEPROM WRITE; '" + WiFiManager_StringToWrite + "'");
+#endif //WiFiManager_SerialEnabled
   if (WiFiManager_StringToWrite.length() > WiFiManager_EEPROM_SIZE)   //If not enough room in the EEPROM
     return false;                                         //Return false; not all data is stored
   for (int i = 0; i < WiFiManager_StringToWrite.length(); i++)        //For each character to save
