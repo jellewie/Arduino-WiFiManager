@@ -110,7 +110,7 @@ String WiFiManager_LoadEEPROM() {
 bool WiFiManager_WriteEEPROM() {
   String WiFiManager_StringToWrite;                                   //Save to mem: <SSID>
   for (byte i = 0; i < WiFiManager_Settings; i++) {
-    WiFiManager_StringToWrite += WiFiManager_Get_Value(i, true);      //^            <Seperator>
+    WiFiManager_StringToWrite += WiFiManager_Get_Value(i + 1, true);  //^            <Seperator>
     if (WiFiManager_Settings - i > 1)
       WiFiManager_StringToWrite += WiFiManager_EEPROM_Seperator;      //^            <Value>  (only if there more values)
   }
@@ -143,7 +143,7 @@ void WiFiManager_handle_Settings() {
     WiFiManager_ArgValue.trim();
     int j = WiFiManager_ArguName.toInt();
     if (j > 0 and j < 255 and WiFiManager_ArgValue != "") {
-      WiFiManager_Set_Value(j + 1, WiFiManager_ArgValue);
+      WiFiManager_Set_Value(j, WiFiManager_ArgValue);
       WiFiManager_MSG += "Succesfull '" + WiFiManager_ArguName + "' = '" + WiFiManager_ArgValue + "'" + char(13);
     } else {
       WiFiManager_Code = 422;   //Flag we had a error
