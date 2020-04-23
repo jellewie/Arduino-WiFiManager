@@ -1,6 +1,6 @@
 /* Written by JelleWho https://github.com/jellewie
    https://github.com/jellewie/Arduino-WiFiManager
-    
+
    1. Load hardcoded data
    2. Load EEPROM data and save data
    3. while(no data) Set up AP mode and wait for user data
@@ -110,7 +110,9 @@ String WiFiManager_LoadEEPROM() {
     Serial.print("_" + String(char(WiFiManager_Input)) + "_");
 #endif //WiFiManager_SerialEnabled
   }
+#ifdef WiFiManager_SerialEnabled
   Serial.println();
+#endif //WiFiManager_SerialEnabled
   return String(WiFiManager_EEPROM_Seperator);  //ERROR; [maybe] not enough space
 }
 bool WiFiManager_WriteEEPROM() {
@@ -201,7 +203,7 @@ byte WiFiManager_APMode() {
   Serial.println(WiFi.softAPIP());
 #endif //WiFiManager_SerialEnabled
   while (WiFiManager_WaitOnAPMode) {
-    if(TickEveryMS(100)) WiFiManager_Status_Blink();  //Let the LED blink to show we are not connected
+    if (TickEveryMS(100)) WiFiManager_Status_Blink(); //Let the LED blink to show we are not connected
     server.handleClient();
   }
   WiFiManager_WaitOnAPMode = true;      //reset flag for next time
@@ -219,9 +221,9 @@ bool WiFiManager_Connect(int WiFiManager_TimeOutMS) {
 #endif
   unsigned long WiFiManager_StopTime = millis() + WiFiManager_TimeOutMS;
   while (WiFi.status() != WL_CONNECTED) {
-    if (WiFiManager_StopTime < millis())     //If we are in overtime
+    if (WiFiManager_StopTime < millis())    //If we are in overtime
       return false;
-    if(TickEveryMS(500)) WiFiManager_Status_Blink();  //Let the LED blink to show we are trying to connect
+    if (TickEveryMS(500)) WiFiManager_Status_Blink(); //Let the LED blink to show we are trying to connect
   }
   return true;
 }
@@ -252,7 +254,9 @@ String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe) {
         WiFiManager_Temp_Return += String(password);
       break;
   }
+#ifdef WiFiManager_SerialEnabled
   Serial.println(" = " + WiFiManager_Temp_Return);
+#endif //WiFiManager_SerialEnabled
   WiFiManager_Temp_Return.replace("\"", "'");   //Make sure to change char(") since we can't use that, change to char(')
   return String(WiFiManager_Temp_Return);
 }
