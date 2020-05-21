@@ -54,6 +54,26 @@ byte WiFiManager_Start() {
      2 Can't begin EEPROM
      3 Can't write [all] data to EEPROM
   */
+  if (byte temp = LoadData()) return temp;
+  bool WiFiManager_Connected = false;
+  while (!WiFiManager_Connected) {
+    if ((strlen(ssid) == 0 or strlen(password) == 0))
+      WiFiManager_APMode();                 //No good ssid or password, entering APmode
+    else {
+      if (WiFiManager_Connect(WiFiManager_ConnectionTimeOutMS)) //try to connected to ssid password
+        WiFiManager_Connected = true;
+      else
+        password[0] = (char)0;              //Clear this so we will enter AP mode (*just clearing first bit)
+    }
+  }
+  WiFiManager_Status_Done();
+#ifdef WiFiManager_SerialEnabled
+  Serial.print("WM: My ip = ");
+  Serial.println(WiFi.localIP()); //Just send it's IP on boot to let you know
+#endif //WiFiManager_SerialEnabled
+  return 1;
+}
+byte LoadData() {     //Only load data from EEPROM to memory
   if (!EEPROM.begin(WiFiManager_EEPROM_SIZE))
     return 2;
   String WiFiManager_a = WiFiManager_LoadEEPROM();
@@ -71,23 +91,7 @@ byte WiFiManager_Start() {
       WiFiManager_a = WiFiManager_a.substring(j + 1);
     }
   }
-  bool WiFiManager_Connected = false;
-  while (!WiFiManager_Connected) {
-    if ((strlen(ssid) == 0 or strlen(password) == 0))
-      WiFiManager_APMode();                 //No good ssid or password, entering APmode
-    else {
-      if (WiFiManager_Connect(WiFiManager_ConnectionTimeOutMS)) //try to connected to ssid password
-        WiFiManager_Connected = true;
-      else
-        password[0] = (char)0;              //Clear this so we will enter AP mode (*just clearing first bit)
-    }
-  }
-  WiFiManager_Status_Done();
-#ifdef WiFiManager_SerialEnabled
-  Serial.print("WM: ");
-  Serial.println(WiFi.localIP()); //Just send it's IP on boot to let you know
-#endif //WiFiManager_SerialEnabled
-  return 1;
+  return 0;
 }
 String WiFiManager_LoadEEPROM() {
   String WiFiManager_Value;
@@ -196,7 +200,7 @@ byte WiFiManager_APMode() {
   */
   if (!WiFi.softAP(WiFiManager_APSSID))
     return 2;
-  WiFiManager_SettingsEnabled = true; //Flag we need to responce to settings commands
+  WiFiManager_EnableSetup(true); //Flag we need to responce to settings commands
   WiFiManager_StartServer();          //start server (if we havn't already)
 #ifdef WiFiManager_SerialEnabled
   Serial.print("WM: APMode on; SSID=" + String(WiFiManager_APSSID) + "ip=");
@@ -207,12 +211,12 @@ byte WiFiManager_APMode() {
     server.handleClient();
   }
   WiFiManager_WaitOnAPMode = true;      //reset flag for next time
-  WiFiManager_SettingsEnabled = false;  //Flag to stop responce to settings commands
+  WiFiManager_EnableSetup(false);  //Flag to stop responce to settings commands
   return 1;
 }
 bool WiFiManager_Connect(int WiFiManager_TimeOutMS) {
 #ifdef WiFiManager_SerialEnabled
-  Serial.println("WM: Connect to ssid='" + String(ssid) + "' password='" + String(password) + "'");
+  Serial.println("WM: Connecting to ssid='" + String(ssid) + "' password='" + String(password) + "'");
 #endif //WiFiManager_SerialEnabled
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -221,15 +225,19 @@ bool WiFiManager_Connect(int WiFiManager_TimeOutMS) {
 #endif
   unsigned long WiFiManager_StopTime = millis() + WiFiManager_TimeOutMS;
   while (WiFi.status() != WL_CONNECTED) {
-    if (WiFiManager_StopTime < millis())    //If we are in overtime
+    if (WiFiManager_StopTime < millis()) {    //If we are in overtime
+#ifdef WiFiManager_SerialEnabled
+      Serial.println("WM: Could not connect withing ='" + String(WiFiManager_TimeOutMS) + "'ms to given WIFI, aborting :" + String(WiFi.status()));
+#endif //WiFiManager_SerialEnabled
       return false;
+    }
     if (TickEveryMS(500)) WiFiManager_Status_Blink(); //Let the LED blink to show we are trying to connect
   }
   return true;
 }
 void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
 #ifdef WiFiManager_SerialEnabled
-  Serial.println("WM: Set value " + String(WiFiManager_ValueID) + " = " + WiFiManager_Temp);
+  Serial.println("WM: Set current value: " + String(WiFiManager_ValueID) + " = " + WiFiManager_Temp);
 #endif //WiFiManager_SerialEnabled
   switch (WiFiManager_ValueID) {
     case 1:
@@ -242,7 +250,7 @@ void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
 }
 String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe) {
 #ifdef WiFiManager_SerialEnabled
-  Serial.print("WM: Get value " + String(WiFiManager_ValueID));
+  Serial.print("WM: Get current value of: " + String(WiFiManager_ValueID));
 #endif //WiFiManager_SerialEnabled
   String WiFiManager_Temp_Return = "";                //Make sure to return something, if we return bad data of NULL, the HTML page will break
   switch (WiFiManager_ValueID) {
