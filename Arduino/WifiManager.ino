@@ -244,7 +244,12 @@ void WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
       WiFiManager_Temp.toCharArray(ssid, WiFiManager_Temp.length() + 1);
       break;
     case 2:
-      WiFiManager_Temp.toCharArray(password, WiFiManager_Temp.length() + 1);
+      for (byte i = 0; i < String(WiFiManager_Temp).length(); i++) {
+        if (WiFiManager_Temp.charAt(i) != '*') {              //if the password is set (and not just the '*****' we have given the client)
+          WiFiManager_Temp.toCharArray(password, WiFiManager_Temp.length() + 1);
+          i = String(WiFiManager_Temp).length();              //Stop for loop
+        }
+      }
       break;
   }
 }
