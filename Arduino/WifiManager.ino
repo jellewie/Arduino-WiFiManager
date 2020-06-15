@@ -34,6 +34,7 @@ const byte WiFiManager_EEPROM_SIZE_PASS = 16;
 
 bool WiFiManager_WaitOnAPMode = true;       //This holds the flag if we should wait in Apmode for data
 bool WiFiManager_SettingsEnabled = false;   //This holds the flag to enable settings, else it would not responce to settings commands
+bool WiFiManager_connected;
 int  WiFiManager_EEPROM_USED = 0;           //Howmany bytes we have used for data in the EEPROM
 //#define strip_ip, gateway_ip, subnet_mask to use static IP
 
@@ -71,6 +72,7 @@ byte WiFiManager_Start() {
   Serial.print("WM: My ip = ");
   Serial.println(WiFi.localIP()); //Just send it's IP on boot to let you know
 #endif //WiFiManager_SerialEnabled
+  WiFiManager_connected = true;
   return 1;
 }
 byte LoadData() {     //Only load data from EEPROM to memory
@@ -184,6 +186,10 @@ void WiFiManager_StartServer() {
     ServerStarted = true;
     server.begin();                 //Begin server
   }
+}
+bool WiFiManager_RunServer() {
+  if (WiFiManager_connected) server.handleClient();
+  return WiFiManager_connected;
 }
 void WiFiManager_EnableSetup(bool WiFiManager_TEMP_State) {
 #ifdef WiFiManager_SerialEnabled

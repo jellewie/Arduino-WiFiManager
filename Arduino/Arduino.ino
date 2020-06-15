@@ -22,4 +22,5 @@ void setup() {
 }
 void loop() {
 
+  //WiFiManager_RunServer();     //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this 'WiFiManager_StartServer()'
 }
