@@ -204,12 +204,13 @@ void WiFiManager_EnableSetup(bool WiFiManager_TEMP_State) {
 byte WiFiManager_APMode() {
   //IP of AP = 192.168.4.1
   /* <Return> <meaning>
-    2 soft-AP setup Failed
+    2 Soft-AP setup Failed
+    3 custom exit
   */
   if (!WiFi.softAP(WiFiManager_APSSID))
     return 2;
-  WiFiManager_EnableSetup(true); //Flag we need to responce to settings commands
-  WiFiManager_StartServer();          //start server (if we havn't already)
+  WiFiManager_EnableSetup(true);        //Flag we need to responce to settings commands
+  WiFiManager_StartServer();            //start server (if we havn't already)
 #ifdef WiFiManager_SerialEnabled
   Serial.print("WM: APMode on; SSID=" + String(WiFiManager_APSSID) + "ip=");
   Serial.println(WiFi.softAPIP());
@@ -217,9 +218,13 @@ byte WiFiManager_APMode() {
   while (WiFiManager_WaitOnAPMode) {
     if (TickEveryMS(100)) WiFiManager_Status_Blink(); //Let the LED blink to show we are not connected
     server.handleClient();
+    if (WiFiManager_HandleAP()) {
+      WiFiManager_EnableSetup(false);   //Flag to stop responce to settings commands
+      return 3;
+    }
   }
   WiFiManager_WaitOnAPMode = true;      //reset flag for next time
-  WiFiManager_EnableSetup(false);  //Flag to stop responce to settings commands
+  WiFiManager_EnableSetup(false);       //Flag to stop responce to settings commands
   return 1;
 }
 bool WiFiManager_Connect(int WiFiManager_TimeOutMS) {
@@ -339,6 +344,12 @@ void WiFiManager_Status_Done() {
 void WiFiManager_Status_Blink() {
   digitalWrite(WiFiManager_LED, !digitalRead(WiFiManager_LED));
 }
+bool WiFiManager_HandleAP() {                 //Called when in the While loop in APMode, this so you can exit it
+//#define TimeOutApMode = 15 * 60 * 1000;     //Example for a timeout, re-enable these 3 lines to apply. (time in ms)
+//  unsigned long StopApAt = millis() + TimeOutApMode;
+//  if (millis() > StopApAt) return true;     //If we are running for to long, then flag we need to exit APMode
+  return false;
+}
 //Some debug functions
 //void WiFiManager_ClearEEPROM() {
 //  EEPROM.write(0, 0);   //We just need to clear the first one, this will spare the EEPROM write cycles and would work fine
@@ -347,10 +358,4 @@ void WiFiManager_Status_Blink() {
 //void WiFiManager_ClearMEM() {
 //  ssid[0] = (char)0;                  //Clear these so we will enter AP mode (*just clearing first bit)
 //  password[0] = (char)0;              //Clear these so we will enter AP mode
-//}
-//String WiFiManager_return_ssid() {
-//  return ssid;
-//}
-//String WiFiManager_return_password() {
-//  return password;
 //}
