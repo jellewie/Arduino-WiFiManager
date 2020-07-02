@@ -57,20 +57,21 @@ byte WiFiManager_Start() {
   */
   if (byte temp = LoadData()) return temp;
   bool WiFiManager_Connected = false;
+  bool FlagApMode = false;
   while (!WiFiManager_Connected) {
-    if ((strlen(ssid) == 0 or strlen(password) == 0))
+    if ((strlen(ssid) == 0 or strlen(password) == 0 or FlagApMode))
       WiFiManager_APMode();                 //No good ssid or password, entering APmode
     else {
       if (WiFiManager_Connect(WiFiManager_ConnectionTimeOutMS)) //try to connected to ssid password
         WiFiManager_Connected = true;
       else
-        password[0] = (char)0;              //Clear this so we will enter AP mode (*just clearing first bit)
+        FlagApMode = true;                  //Flag so we will enter AP mode
     }
   }
   WiFiManager_Status_Done();
 #ifdef WiFiManager_SerialEnabled
-  Serial.print("WM: My ip = ");
-  Serial.println(WiFi.localIP()); //Just send it's IP on boot to let you know
+  Serial.print("WM: connected; SSID=" + String(ssid) + " ip=");
+  Serial.print(WiFi.localIP());
 #endif //WiFiManager_SerialEnabled
   WiFiManager_connected = true;
   return 1;
@@ -209,10 +210,10 @@ byte WiFiManager_APMode() {
   */
   if (!WiFi.softAP(WiFiManager_APSSID))
     return 2;
-  WiFiManager_EnableSetup(true);        //Flag we need to responce to settings commands
-  WiFiManager_StartServer();            //start server (if we havn't already)
+  WiFiManager_EnableSetup(true); //Flag we need to responce to settings commands
+  WiFiManager_StartServer();          //start server (if we havn't already)
 #ifdef WiFiManager_SerialEnabled
-  Serial.print("WM: APMode on; SSID=" + String(WiFiManager_APSSID) + "ip=");
+  Serial.print("WM: APMode on; SSID=" + String(WiFiManager_APSSID) + " ip=");
   Serial.println(WiFi.softAPIP());
 #endif //WiFiManager_SerialEnabled
   while (WiFiManager_WaitOnAPMode) {
@@ -224,7 +225,7 @@ byte WiFiManager_APMode() {
     }
   }
   WiFiManager_WaitOnAPMode = true;      //reset flag for next time
-  WiFiManager_EnableSetup(false);       //Flag to stop responce to settings commands
+  WiFiManager_EnableSetup(false);  //Flag to stop responce to settings commands
   return 1;
 }
 bool WiFiManager_Connect(int WiFiManager_TimeOutMS) {
@@ -314,7 +315,7 @@ String ConvertWifistatus(byte IN) {
       return "WL_IDLE_STATUS";
       break;
     case WL_NO_SSID_AVAIL:
-      return "WL_NO_SSID_AVAIL";
+      return "WL_NO_SSID_AVAILABLE";
       break;
     case WL_SCAN_COMPLETED:
       return "WL_SCAN_COMPLETED";
@@ -345,7 +346,7 @@ void WiFiManager_Status_Blink() {
   digitalWrite(WiFiManager_LED, !digitalRead(WiFiManager_LED));
 }
 bool WiFiManager_HandleAP() {                 //Called when in the While loop in APMode, this so you can exit it
-//#define TimeOutApMode = 15 * 60 * 1000;     //Example for a timeout, re-enable these 3 lines to apply. (time in ms)
+//#define TimeOutApMode 15 * 60 * 1000;     //Example for a timeout, re-enable these 3 lines to apply. (time in ms)
 //  unsigned long StopApAt = millis() + TimeOutApMode;
 //  if (millis() > StopApAt) return true;     //If we are running for to long, then flag we need to exit APMode
   return false;
