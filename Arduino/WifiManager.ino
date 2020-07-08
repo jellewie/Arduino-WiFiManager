@@ -197,8 +197,12 @@ bool WiFiManager_RunServer() {
 void WiFiManager_EnableSetup(bool WiFiManager_TEMP_State) {
 #ifdef WiFiManager_SerialEnabled
   if (WiFiManager_TEMP_State) {
-    Serial.print("WM: Settings page online ip=");
-    Serial.println(WiFi.softAPIP());
+    if (WiFiManager_connected)
+      Serial.print("WM: Settings page online");
+    else {
+      Serial.print("WM: Settings page online ip=");
+      Serial.println(WiFi.softAPIP());
+    }
   } else
     Serial.println("WM: Settings page offline");
 #endif //WiFiManager_SerialEnabled
