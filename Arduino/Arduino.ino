@@ -7,12 +7,12 @@
 WebServer server(80);
 
 void setup() {
+  Serial.begin(115200);
   server.on("/",          WiFiManager_handle_Connect);    //Must be declaired before "WiFiManager_Start()" for APMode
   server.on("/setup",     WiFiManager_handle_Settings);   //Must be declaired before "WiFiManager_Start()" for APMode
 
   byte Answer = WiFiManager_Start();                      //run the wifi startup (and save results)
   
-  Serial.begin(115200);
   Serial.println("setup done with code '" + String(Answer) + "'");
   
   //WiFiManager_StartServer();      //Start the server (if you need this for other stuff)

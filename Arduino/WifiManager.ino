@@ -59,9 +59,10 @@ byte WiFiManager_Start() {
   bool WiFiManager_Connected = false;
   bool FlagApMode = false;
   while (!WiFiManager_Connected) {
-    if ((strlen(ssid) == 0 or strlen(password) == 0 or FlagApMode))
+    if ((strlen(ssid) == 0 or strlen(password) == 0 or FlagApMode)) {
+      FlagApMode = false;
       WiFiManager_APMode();                 //No good ssid or password, entering APmode
-    else {
+    } else {
       if (WiFiManager_Connect(WiFiManager_ConnectionTimeOutMS)) //try to connected to ssid password
         WiFiManager_Connected = true;
       else
@@ -198,7 +199,7 @@ void WiFiManager_EnableSetup(bool WiFiManager_TEMP_State) {
     Serial.print("WM: Settings page online ip=");
     Serial.println(WiFi.softAPIP());
   } else
-    Serial.print("WM: Settings page offline");
+    Serial.println("WM: Settings page offline");
 #endif //WiFiManager_SerialEnabled
   WiFiManager_SettingsEnabled = WiFiManager_TEMP_State;
 }
@@ -346,9 +347,9 @@ void WiFiManager_Status_Blink() {
   digitalWrite(WiFiManager_LED, !digitalRead(WiFiManager_LED));
 }
 bool WiFiManager_HandleAP() {                 //Called when in the While loop in APMode, this so you can exit it
-//#define TimeOutApMode 15 * 60 * 1000;     //Example for a timeout, re-enable these 3 lines to apply. (time in ms)
-//  unsigned long StopApAt = millis() + TimeOutApMode;
-//  if (millis() > StopApAt) return true;     //If we are running for to long, then flag we need to exit APMode
+  //#define TimeOutApMode 15 * 60 * 1000;     //Example for a timeout, re-enable these 3 lines to apply. (time in ms)
+  //  unsigned long StopApAt = millis() + TimeOutApMode;
+  //  if (millis() > StopApAt) return true;     //If we are running for to long, then flag we need to exit APMode
   return false;
 }
 //Some debug functions
