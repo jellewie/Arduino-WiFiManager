@@ -14,7 +14,7 @@
 
    You can use "strip_ip, gateway_ip, subnet_mask" to set a static connection
 
-   HOW TO ADD CUSTOM CALUES
+   HOW TO ADD CUSTOM VALUES
    -"WiFiManager_VariableNames" Add the 'AP settings portal' name
    -"WiFiManager_EEPROM_SIZE"   [optional] Make sure it is big enough for your needs, SIZE_SSID+SIZE_PASS+YourValues (1 byte = 1 character)
    -"WiFiManager_Set_Value"     Set the action on what to do on startup with this value
@@ -38,15 +38,12 @@ bool WiFiManager_connected;                 //If the ESP is connected to WIFI
 int  WiFiManager_EEPROM_USED = 0;           //Howmany bytes we have used for data in the EEPROM
 //#define strip_ip, gateway_ip, subnet_mask to use static IP
 
-#ifndef ssid
 char ssid[WiFiManager_EEPROM_SIZE_SSID] = "";
-#endif //ssid
-
-#ifndef password
 char password[WiFiManager_EEPROM_SIZE_PASS] = "";
-#endif //password
 
 #include <EEPROM.h>
+#include <DNSServer.h>
+DNSServer dnsServer;
 
 byte WiFiManager_Start() {
   WiFiManager_Status_Start();
@@ -104,15 +101,17 @@ String WiFiManager_LoadEEPROM() {
 #endif //WiFiManager_SerialEnabled
   for (int i = 0; i < WiFiManager_EEPROM_SIZE; i++) {
     byte WiFiManager_Input = EEPROM.read(i);
-    WiFiManager_EEPROM_USED = WiFiManager_Value.length();
-    if (WiFiManager_Input == 255) {              //If at the end of data
+    if (WiFiManager_Input == 255) {             //If at the end of data
 #ifdef WiFiManager_SerialEnabled
       Serial.println();
 #endif //WiFiManager_SerialEnabled
+      WiFiManager_EEPROM_USED = WiFiManager_Value.length();
       return WiFiManager_Value;                 //Stop and return all data stored
     }
-    if (WiFiManager_Input == 0)                 //If no data found (NULL)
+    if (WiFiManager_Input == 0) {                //If no data found (NULL)
+      WiFiManager_EEPROM_USED = WiFiManager_Value.length();
       return String(WiFiManager_EEPROM_Seperator);
+    }
     WiFiManager_Value += char(WiFiManager_Input);
 #ifdef WiFiManager_SerialEnabled
     Serial.print("_" + String(char(WiFiManager_Input)) + "_");
@@ -121,12 +120,13 @@ String WiFiManager_LoadEEPROM() {
 #ifdef WiFiManager_SerialEnabled
   Serial.println();
 #endif //WiFiManager_SerialEnabled
+  WiFiManager_EEPROM_USED = WiFiManager_Value.length();
   return String(WiFiManager_EEPROM_Seperator);  //ERROR; [maybe] not enough space
 }
 bool WiFiManager_WriteEEPROM() {
   String WiFiManager_StringToWrite;                                   //Save to mem: <SSID>
   for (byte i = 0; i < WiFiManager_Settings; i++) {
-    WiFiManager_StringToWrite += WiFiManager_Get_Value(i + 1, true);  //^            <Seperator>
+    WiFiManager_StringToWrite += WiFiManager_Get_Value(i + 1, true, false);  //^            <Seperator>
     if (WiFiManager_Settings - i > 1)
       WiFiManager_StringToWrite += WiFiManager_EEPROM_Seperator;      //^            <Value>  (only if there more values)
   }
@@ -147,9 +147,10 @@ void WiFiManager_handle_Connect() {
     return;                           //Stop right away, and do noting
   String WiFiManager_Temp_HTML = "<strong>" + String(WiFiManager_APSSID) + " settings</strong><br><br><form action=\"/setup?\" method=\"get\">";
   for (byte i = 1; i < WiFiManager_Settings + 1; i++)
-    WiFiManager_Temp_HTML += "<div><label>" + WiFiManager_VariableNames[i - 1] + "</label><input type=\"text\" name=\"" + i + "\" value=\"" + WiFiManager_Get_Value(i, false) + "\"></div>";
+    WiFiManager_Temp_HTML += "<div><label>" + WiFiManager_VariableNames[i - 1] + " </label><input type=\"text\" name=\"" + i + "\" value=\"" + WiFiManager_Get_Value(i, false, true) + "\"></div>";
   WiFiManager_Temp_HTML += "<button>Send</button></form>";
-  WiFiManager_Temp_HTML += String(WiFiManager_EEPROM_USED) + "/" + String(WiFiManager_EEPROM_SIZE) + " Bytes used";
+  WiFiManager_Temp_HTML += String(WiFiManager_EEPROM_USED) + "/" + String(WiFiManager_EEPROM_SIZE) + " Bytes used<br>";
+  WiFiManager_Temp_HTML += "MAC adress = " +  String(WiFi.macAddress());
   server.send(200, "text/html", WiFiManager_Temp_HTML);
 }
 void WiFiManager_handle_Settings() {
@@ -165,12 +166,12 @@ void WiFiManager_handle_Settings() {
     int j = WiFiManager_ArguName.toInt();
     if (j > 0 and j < 255 and WiFiManager_ArgValue != "") {
       if (WiFiManager_Set_Value(j, WiFiManager_ArgValue))
-        WiFiManager_MSG += "Succesfull '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'" + char(13);
+        WiFiManager_MSG += "Succesfull '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'\n";
       else
-        WiFiManager_MSG += "ERROR Set; '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'" + char(13);
+        WiFiManager_MSG += "ERROR Set; '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'\n";
     } else {
       WiFiManager_Code = 422;   //Flag we had a error
-      WiFiManager_MSG += "ERROR ID; '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'" + char(13);
+      WiFiManager_MSG += "ERROR ID; '" + WiFiManager_ArguName + "'='" + WiFiManager_ArgValue + "'\n";
     }
   }
   WiFiManager_WaitOnAPMode = false;     //Flag we have input data, and we can stop waiting in APmode on data
@@ -198,7 +199,7 @@ void WiFiManager_EnableSetup(bool WiFiManager_TEMP_State) {
 #ifdef WiFiManager_SerialEnabled
   if (WiFiManager_TEMP_State) {
     if (WiFiManager_connected)
-      Serial.print("WM: Settings page online");
+      Serial.println("WM: Settings page online");
     else {
       Serial.print("WM: Settings page online ip=");
       Serial.println(WiFi.softAPIP());
@@ -214,10 +215,11 @@ byte WiFiManager_APMode() {
     2 Soft-AP setup Failed
     3 custom exit
   */
-  if (!WiFi.softAP(WiFiManager_APSSID))
+  if (!WiFi.softAP(WiFiManager_APSSID))       //config doesn't seem to work, so do not use it: 'WiFi.softAPConfig(ap_local_IP, ap_gateway, ap_subnet)'
     return 2;
-  WiFiManager_EnableSetup(true); //Flag we need to responce to settings commands
-  WiFiManager_StartServer();          //start server (if we havn't already)
+  WiFiManager_EnableSetup(true);              //Flag we need to responce to settings commands
+  WiFiManager_StartServer();                  //start server (if we havn't already)
+  dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));  //Start a DNS server at the default DNS port, and send ALL trafic to it OWN IP (DNS_port, DNS_domainName, DNS_resolvedIP)
 #ifdef WiFiManager_SerialEnabled
   Serial.print("WM: APMode on; SSID=" + String(WiFiManager_APSSID) + " ip=");
   Serial.println(WiFi.softAPIP());
@@ -225,14 +227,17 @@ byte WiFiManager_APMode() {
   while (WiFiManager_WaitOnAPMode) {
     if (TickEveryMS(100)) WiFiManager_Status_Blink(); //Let the LED blink to show we are not connected
     server.handleClient();
+    dnsServer.processNextRequest();
     if (WiFiManager_HandleAP()) {
 #ifdef SerialEnabled        //DEBUG, print button state to serial
       Serial.println("WM: Manual leaving APMode");
 #endif //SerialEnabled
       WiFiManager_EnableSetup(false);   //Flag to stop responce to settings commands
+      dnsServer.stop();
       return 3;
     }
   }
+  dnsServer.stop();
 #ifdef WiFiManager_SerialEnabled
   Serial.println("WM: Leaving APmode");
 #endif //WiFiManager_SerialEnabled
@@ -281,9 +286,10 @@ bool WiFiManager_Set_Value(byte WiFiManager_ValueID, String WiFiManager_Temp) {
   }
   return true;
 }
-String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe) {
+String WiFiManager_Get_Value(byte WiFiManager_ValueID, bool WiFiManager_Safe, bool WiFiManager_Convert) {
+  //WiFiManager_Safe == true will return the real password,
 #ifdef WiFiManager_SerialEnabled
-  Serial.print("WM: Get current value of: " + String(WiFiManager_ValueID));
+  Serial.print("WM: Get current value of: " + String(WiFiManager_ValueID) + " safe=" + String(WiFiManager_Safe) + " conv=" + String(WiFiManager_Convert));
 #endif //WiFiManager_SerialEnabled
   String WiFiManager_Temp_Return = "";                //Make sure to return something, if we return bad data of NULL, the HTML page will break
   switch (WiFiManager_ValueID) {
