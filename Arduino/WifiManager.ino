@@ -182,7 +182,14 @@ void WiFiManager_handle_Settings() {
     server.handleClient();
     delay(1);
   }
-  WiFiManager_connected = false;      //Flag that WIFI is off, and we need to reconnect (In case user requested to switch WIFI)
+  static String OldSSID = ssid;
+  if (OldSSID != String(ssid)) {
+#ifdef WiFiManager_SerialEnabled
+    Serial.println("WM: Auto disconnect, new SSID recieved, from " + OldSSID + " to " + String(ssid));
+#endif //WiFiManager_SerialEnabled
+    OldSSID = String(ssid);
+    WiFiManager_connected = false;      //Flag that WIFI is off, and we need to reconnect (In case user requested to switch WIFI)
+  }
 }
 void WiFiManager_StartServer() {
   static bool ServerStarted = false;
