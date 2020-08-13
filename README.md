@@ -21,3 +21,9 @@ there are a few ways to do this
 -Connect to "ESP32" (WiFiManager_APSSID)
 -Goto "196.168.4.1"
 -Fill in WIFI settings, and press SEND. (Data will be saved to EEPROM when it works)
+
+# LED status
+On the ESP there is a LED_BUILDIN this LED reflects some erros
+- **ON** WIFI starts, goes OFF when WIFI setup is successfully completed
+- **blink 100ms** WIFI setup failed, APmode has started
+- **blink 500ms** it is connecting to its known WiFi
