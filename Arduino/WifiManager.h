@@ -44,7 +44,7 @@ class CWiFiManager {
     char password[16] = "";                         //Also efines howmany characters can be in the SSID
     char ssid[16] = "";                             //^
     //#define strip_ip, gateway_ip, subnet_mask to use static IP
-    char* APSSID = "ESP32";
+    char APSSID[16] = "ESP32";
     const int EEPROM_size = 255;                    //Max Amount of chars of 'SSID + PASSWORD' (+1) (+extra custom vars)
     const byte Pin_LED  = LED_BUILTIN;              //The LED to give feedback on (like blink on error)
     bool Set_Value(byte ValueID, String Value) {
