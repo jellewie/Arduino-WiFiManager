@@ -259,7 +259,7 @@ class CWiFiManager {
       }
       return true;
     }
-    byte Start() {                                  //Start all WIFI stugg
+    byte Start() {                                  //Start all WIFI stuff
       Status_Start();
       //starts wifi stuff, only returns when WiFiManager_Connected. will create Acces Point when needed
       /* <Return> <meaning>
@@ -357,6 +357,10 @@ class CWiFiManager {
         Oldpassword = String(password);
         WiFiManager_Connected = false;              //Flag that WIFI is off, and we need to reconnect (In case user requested to switch WIFI)
       }
+    }
+    void CheckAndReconnectIfNeeded() {
+      //Checks if WIFI is connected, and if so tries to reconnect
+      if (String(WiFi.localIP()) = "0.0.0.0") Start();
     }
 #ifdef WiFiManager_SerialEnabled
     String ConvertWifistatus(byte IN) {
