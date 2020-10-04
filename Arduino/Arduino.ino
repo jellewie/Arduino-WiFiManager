@@ -13,7 +13,6 @@ void setup() {
   server.on("/setup",     WiFiManager_handle_Settings);   //Must be declaired before "WiFiManager_Start()" for APMode
 
   byte Answer = WiFiManager.Start();                      //run the wifi startup (and save results)
-  
   Serial.println("setup done with code '" + String(Answer) + "'");
   
   //WiFiManager.StartServer();      //Start the server (if you need this for other stuff)

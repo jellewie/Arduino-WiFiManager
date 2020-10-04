@@ -44,7 +44,7 @@ class CWiFiManager {
     char password[16] = "";                         //Also efines howmany characters can be in the SSID
     char ssid[16] = "";                             //^
     //#define strip_ip, gateway_ip, subnet_mask to use static IP
-    char APSSID[16] = "ESP32";
+    char APSSID[16] = "ESP32";    //char* APSSID = Name;    //if you want to define the name somewhere else
     const int EEPROM_size = 255;                    //Max Amount of chars of 'SSID + PASSWORD' (+1) (+extra custom vars)
     const byte Pin_LED  = LED_BUILTIN;              //The LED to give feedback on (like blink on error)
     bool Set_Value(byte ValueID, String Value) {
@@ -313,7 +313,7 @@ class CWiFiManager {
     }
     void handle_Connect() {
       if (!SettingsEnabled) return;                 //If settingscommand is disabled: Stop right away, and do noting
-      String HTML = "<strong>" + String(APSSID) + " settings</strong><br><br><form action=\"/setup?\" method=\"get\">";
+      String HTML = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><strong>" + String(APSSID) + " settings</strong><br><br><form action=\"/setup?\" method=\"get\">";
       for (byte i = 1; i < WiFiManager_Settings + 1; i++)
         HTML += "<div><label>" + WiFiManager_VariableNames[i - 1] + " </label><input type=\"text\" name=\"" + i + "\" value=\"" + Get_Value(i, false, true) + "\"></div>";
       HTML += "<button>Send</button></form>"
