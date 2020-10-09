@@ -360,13 +360,16 @@ class CWiFiManager {
         WiFi.disconnect();                          //we need to reconnect (user requested to switch WIFI)
       }
     }
-    void CheckAndReconnectIfNeeded(bool AllowAPmode) {
+    bool CheckAndReconnectIfNeeded(bool AllowAPmode) {
       if (WiFi.status() != WL_CONNECTED) {
         if (AllowAPmode)
           Start();
         else
           Connect(ConnectionTimeOutMS);
+        if (WiFi.status() != WL_CONNECTED)  //If still not connected
+          return false;
       }
+      return true;
     }
 #ifdef WiFiManager_SerialEnabled
     String ConvertWifistatus(byte IN) {
