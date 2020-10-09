@@ -44,7 +44,7 @@ class CWiFiManager {
     char ssid[16] = "";                             //^
     //#define strip_ip, gateway_ip, subnet_mask to use static IP
     char APSSID[16] = "ESP32";                      //If you want to define the name somewhere else use 'char* APSSID = Name'
-    const int EEPROM_size = 255;                    //Max Amount of chars of 'SSID + PASSWORD' (+1) (+extra custom vars)
+    const int EEPROM_size = 33;                     //Max Amount of chars of 'SSID + PASSWORD' (+1) (+extra custom vars)
     const byte Pin_LED  = LED_BUILTIN;              //The LED to give feedback on (like blink on error)
     bool Set_Value(byte ValueID, String Value) {
       //From EEPROM to RAM
@@ -306,7 +306,7 @@ class CWiFiManager {
       if (!EEPROM.begin(EEPROM_size))
         return false;
       for (int i = 0; i < EEPROM_size; i++)         //For each character to save
-        EEPROM.write(i, NULL);                      //Clear the EEPROM bit
+        EEPROM.write(i, 0);                         //Clear the EEPROM bit
       EEPROM.commit();
       return true;
     }
