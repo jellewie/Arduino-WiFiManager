@@ -15,8 +15,8 @@
    -"Set_Value"     Set the action on what to do on startup with this value
    -"Get_Value"     [optional] Set the action on what to fill in in the boxes in the 'AP settings portal'
 */
-#ifndef WifiManager_h                               //This prevents including this file more than once
-#define WifiManager_h
+#ifndef WiFiManager_h                               //This prevents including this file more than once
+#define WiFiManager_h
 
 #define WiFiManager_SerialEnabled                 //Disable to not send Serial debug feedback
 //#define dnsServerEnabled
