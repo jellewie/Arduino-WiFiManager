@@ -30,9 +30,7 @@
 
 //#define WiFiManagerUser_VariableNames_Defined                 //Define that we want to use the custom user variables (Dont forget to settup WiFiManager_VariableNames and WiFiManager_Settings)
 //const String WiFiManager_VariableNames[] = {"SSID", "Password", "Custom variable Name 1"};
-//const byte WiFiManager_Settings = sizeof(WiFiManager_VariableNames) / sizeof(WiFiManager_VariableNames[0]); //Why filling this in if we can automate that? :)
-
-//const byte EEPROM_size = 255;                                 //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
+//const int EEPROM_size = 255;                                 //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
 
 //#define WiFiManagerUser_APSSID_Defined
 //char APSSID[16] = "ESP32";                                    //If you want to define the name somewhere else use 'char* APSSID = Name'
