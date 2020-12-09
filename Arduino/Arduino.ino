@@ -1,5 +1,5 @@
 /*
-  Program written by JelleWho
+  Program written by JelleWho https://github.com/jellewie
   Board: https://dl.espressif.com/dl/package_esp32_index.json
 */
 #include "WiFiManagerUser.h"          //Define custon functions to hook into WiFiManager
