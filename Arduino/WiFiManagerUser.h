@@ -35,16 +35,18 @@
 
 //#define WiFiManagerUser_VariableNames_Defined                 //Define that we want to use the custom user variables (Dont forget to settup WiFiManager_VariableNames and WiFiManager_Settings)
 //const String WiFiManager_VariableNames[] = {"SSID", "Password", "Custom variable Name 1"};
-//const int EEPROM_size = 255;                                 //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
+//const int EEPROM_size = 255;                                  //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
 
 //#define WiFiManagerUser_Name_Defined
-//char Name[16] = "ESP32";                                    //If you want to define the name somewhere else use 'char* Name = Name'
+//char Name[16] = "ESP32";                                      //If you want to define the name somewhere else use 'char* Name = Name'
+
+//#define WiFiManager_mDNS                                      //Set up mDNS, this makes it so it responce to the url 'http://name.local/'
 
 //#define WiFiManager_OTA                                       //Define if you want to use the Over The Air update page (/ota)
 //#define WiFiManagerUser_UpdateWebpage_Defined
 //const String UpdateWebpage = ""                               //Set an custom OTA update URL to show the user
 
-//#define WiFiManager_mDNS                                      //Set up mDNS, this makes it so it responce to the url 'http://name.local/'
+//#define WiFiManager_DNS                                       //Was causing some troubles with stableness, note sure why yet
 //===========================================================================
 // End of section
 //===========================================================================
@@ -60,6 +62,7 @@ bool WiFiManagerUser_Set_Value(byte ValueID, String Value) {
       } break;
     case 1: {
         int SomeValue = Value.toInt();
+        SomeValue = SomeValue + 0;                              //Just here to 'use' the value so the compiler wont warn us about it
         return true;
       } break;
   }
