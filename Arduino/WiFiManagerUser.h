@@ -45,7 +45,11 @@
 //#define WiFiManager_OTA                                       //Define if you want to use the Over The Air update page (/ota)
 //#define WiFiManagerUser_UpdateWebpage_Defined
 //const String UpdateWebpage = ""                               //Set an custom OTA update URL to show the user
+//WiFiManager.RunServer();                                      //Note when using OTA, you need to run the server in your loop
 
+//WiFiManager.EnableSetup(true);                                //Enable the settings, only enabled in APmode by default
+//WiFiManager.WriteEEPROM();                                    //If you want to manually save the settings (EEPROM LIMITED WRITES AVAILIBLE! do not spam)
+                                      
 //#define WiFiManager_DNS                                       //Was causing some troubles with stableness, note sure why yet
 //===========================================================================
 // End of section
