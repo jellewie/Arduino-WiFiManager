@@ -12,5 +12,5 @@ void setup() {
   Serial.println("setup done with code '" + String(Answer) + "'");
 }
 void loop() {
-  //WiFiManager.RunServer();          //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this with 'WiFiManager_StartServer()', Also required for OTA and such
+  //WiFiManager.RunServer();          //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this with 'WiFiManager.Start()', Also required for OTA and such
 }
