@@ -161,6 +161,7 @@ void CWiFiManager::StartServer() {
   if (ServerStarted) return;                          //If the server is already started, stop here
   ServerStarted = true;
   server.on("/",          WiFiManager_handle_Connect);
+  server.on("/ip",        WiFiManager_handle_Connect);//Just as backup, so the "/" can be overwritten by user 
   server.on("/setup",     WiFiManager_handle_Settings);
 #ifdef WiFiManager_OTA
   server.on("/ota",       WiFiManager_OTA_handle_uploadPage);
