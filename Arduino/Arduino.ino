@@ -18,5 +18,5 @@ void setup() {
   Serial.println("WiFi setup executed with responce code '" + String(Answer) + "'");  //The return codes can be found in "WiFiManager.cpp" in "CWiFiManager::Start("
 }
 void loop() {
-  //WiFiManager.RunServer();                                    //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this with 'WiFiManager_StartServer()', Also required for OTA and such
+  //WiFiManager.RunServer();                                    //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this with 'WiFiManager.Start()', Also required for OTA and such
 }
