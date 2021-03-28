@@ -34,7 +34,8 @@
 #define WiFiManagerUser_Status_StartAP_Defined                  //^
 #define WiFiManagerUser_HandleAP_Defined                        //^
 
-#define WiFiManagerUser_DoRequest                               //Adds a simple way to do stable URL request (with optional json)
+#define WiFiManager_DoRequest                                   //Adds a simple way to do stable URL request (with optional json)
+#define WiFiManager_Restart                                     //Adds a simple handle "/restart" to restart the ESP
 
 //#define WiFiManagerUser_VariableNames_Defined                 //Define that we want to use the custom user variables (Dont forget to settup WiFiManager_VariableNames and WiFiManager_Settings)
 //const String WiFiManager_VariableNames[] = {"SSID", "Password", "Custom variable Name 1"};

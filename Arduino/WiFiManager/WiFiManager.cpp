@@ -156,13 +156,29 @@ void WiFiManager_OTA_handle_update2() {
 }
 #endif //WiFiManager_OTA
 //===========================================================================
+#ifdef WiFiManager_Restart
+void handle_Restart() {
+#ifdef WiFiManager_SerialEnabled
+  Serial.println("WM: handle_Restart");
+#endif //WiFiManager_SerialEnabled
+  server.send(200, "text/html", "OK, restarting...");
+  for (byte i = 50; i > 0; i--) {                       //Add some delay here to send feedback to the client, i is delay in MS
+    server.handleClient();
+    delay(1);
+  }
+  ESP.restart();
+}
+#endif //WiFiManager_Restart
 void CWiFiManager::StartServer() {
   static bool ServerStarted = false;
   if (ServerStarted) return;                          //If the server is already started, stop here
   ServerStarted = true;
   server.on("/",          WiFiManager_handle_Connect);
-  server.on("/ip",        WiFiManager_handle_Connect);//Just as backup, so the "/" can be overwritten by user 
+  server.on("/ip",        WiFiManager_handle_Connect);//Just as backup, so the "/" can be overwritten by user
   server.on("/setup",     WiFiManager_handle_Settings);
+#ifdef WiFiManager_Restart
+  server.on("/restart",   handle_Restart);
+#endif //WiFiManager_Restart
 #ifdef WiFiManager_OTA
   server.on("/ota",       WiFiManager_OTA_handle_uploadPage);
   server.on("/update",    HTTP_POST, WiFiManager_OTA_handle_update, WiFiManager_OTA_handle_update2);
@@ -194,7 +210,7 @@ bool CWiFiManager::TickEveryMS(int _Delay) {
 byte CWiFiManager::APMode() {
   //IP of AP = 192.168.4.1
   /* Returns:
-	1= Done, Client submitted new data though AP portal
+    1= Done, Client submitted new data though AP portal
     2= Soft-AP setup Failed
     3= Manual leaving AP mode (User code has requested it)
   */
@@ -442,19 +458,17 @@ bool CWiFiManager::CheckAndReconnectIfNeeded(bool AllowAPmode) {
   return true;
 }
 #ifdef WiFiManager_OTA
-
 void CWiFiManager::handle_uploadPage() {
 #ifdef WiFiManager_SerialEnabled
   Serial.println("OTA_handle_UploadPage, enabled=" + OTA_Enabled ? "TRUE" : "FALSE");
 #endif //WiFiManager_SerialEnabled
   if (!OTA_Enabled) return;                             //If OTA is disabled, stop here and do not respond
-  String html = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'>"
-  "</script><a href=\"" + UpdateWebpage + "\">" + UpdateWebpage + "</a><br>Code compiled on " + String(__DATE__) + " " + String(__TIME__) + "<br><br><form method='POST' action='#' enctype='multipart/form-data' id='upload_form'><input type='file' name='update'><input type='submit' value='Upload'></form><div id='prg'>progress: 0%</div><script>$('form').submit(function(c){c.preventDefault();var a=$('#upload_form')[0];var b=new FormData(a);$.ajax({url:'/update',type:'POST',data:b,contentType:false,processData:false,xhr:function(){var d=new window.XMLHttpRequest();d.upload.addEventListener('progress',function(e){if(e.lengthComputable){var f=e.loaded/e.total;$('#prg').html('progress: '+Math.round(f*100)+'%')}},false);return d},success:function(f,e){console.log('success!')},error:function(e,d,f){}})});</script>";
+  String html = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script><a href=\"" + UpdateWebpage + "\">" + UpdateWebpage + "</a><br>Code compiled on " + String(__DATE__) + " " + String(__TIME__) + "<br><br><form method='POST' action='#' enctype='multipart/form-data' id='upload_form'><input type='file' name='update'><input type='submit' value='Upload'></form><div id='prg'>progress: 0%</div><script>$('form').submit(function(c){c.preventDefault();var a=$('#upload_form')[0];var b=new FormData(a);$.ajax({url:'/update',type:'POST',data:b,contentType:false,processData:false,xhr:function(){var d=new window.XMLHttpRequest();d.upload.addEventListener('progress',function(e){if(e.lengthComputable){var f=e.loaded/e.total;$('#prg').html('progress: '+Math.round(f*100)+'%')}},false);return d},success:function(f,e){console.log('success!')},error:function(e,d,f){}})});</script>";
   server.send(200, "text/html", html);
 }
 void CWiFiManager::handle_update() {
 #ifdef WiFiManager_SerialEnabled
-  Serial.printf("OTA: Update, enabled=" + OTA_Enabled ? "TRUE" : "FALSE");
+  Serial.printf("WM_OTA: Update, enabled=" + OTA_Enabled ? "TRUE" : "FALSE");
 #endif //WiFiManager_SerialEnabled
   if (!OTA_Enabled) return;                             //If OTA is disabled, stop here and do not respond
   server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
@@ -489,7 +503,7 @@ void CWiFiManager::handle_update2() {
 #endif //WiFiManager_SerialEnabled
 }
 #endif //WiFiManager_OTA
-#ifdef WiFiManagerUser_DoRequest
+#ifdef WiFiManager_DoRequest
 byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json, byte TimeOut) {
   /* Returns:
     0= Unknown error (responce out of range)  REQ_UNK
@@ -501,7 +515,7 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
     10-19= Unknown server error (first digit Responce=X-10, for example 4 means an 4## client error (like 403 Forbidden))
   */
 #ifdef WiFiManager_SerialEnabled
-  Serial.println("REQ: DO REQUEST: " + String(_IP) + ":" + _Port + _Path + " _Data=" + _Json);
+  Serial.println("WM_REQ: DO REQUEST: " + String(_IP) + ":" + _Port + _Path + " _Data=" + _Json);
 #endif //WiFiManager_SerialEnabled
 
   if (!WiFiManager.CheckAndReconnectIfNeeded(false))
@@ -545,4 +559,4 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
     return 10 + floor(Responcecode / 100);
   return REQ_UNK;
 }
-#endif //WiFiManagerUser_DoRequest
+#endif //WiFiManager_DoRequest

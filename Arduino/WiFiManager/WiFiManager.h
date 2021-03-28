@@ -27,9 +27,9 @@ WebServer server(80);
 const String WiFiManager_VariableNames[] = {"SSID", "Password"};
 #endif //WiFiManagerUser_VariableNames_Defined
 const byte WiFiManager_Settings = sizeof(WiFiManager_VariableNames) / sizeof(WiFiManager_VariableNames[0]); //Why filling this in if we can automate that? :)
-#ifdef WiFiManagerUser_DoRequest
+#ifdef WiFiManager_DoRequest
 enum {REQ_UNK, REQ_SUCCES, REQ_HUB_CONNECT_ERROR, REQ_TIMEOUT, REQ_PAGE_NOT_FOUND, REQ_SETUP_REQUIRED};
-#endif //WiFiManagerUser_DoRequest
+#endif //WiFiManager_DoRequest
 
 class CWiFiManager {
   private:
@@ -82,10 +82,10 @@ class CWiFiManager {
     void handle_update();
     void handle_update2();
 #endif //WiFiManager_OTA
-#ifdef WiFiManagerUser_DoRequest
+#ifdef WiFiManager_DoRequest
     enum {REQ_UNK, REQ_SUCCES, REQ_HUB_CONNECT_ERROR, REQ_TIMEOUT, REQ_PAGE_NOT_FOUND, REQ_SETUP_REQUIRED};
     byte DoRequest(char _IP[16], int _Port = 80, String _Path = "", String _Json = "", byte TimeOut = 0);
-#endif //WiFiManagerUser_DoRequest
+#endif //WiFiManager_DoRequest
 };
 
 CWiFiManager WiFiManager;
