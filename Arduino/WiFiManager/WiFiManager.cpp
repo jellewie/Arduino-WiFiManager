@@ -521,9 +521,9 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
   if (!WiFiManager.CheckAndReconnectIfNeeded(false))
     return REQ_SETUP_REQUIRED;                          //Exit here, no connection, and could not auto connect
   WiFiClient client;
+  client.setTimeout(TimeOut);
   if (!client.connect(_IP, _Port))
-    client.setTimeout(TimeOut);
-  return REQ_HUB_CONNECT_ERROR;                       //Stop here, no reason to move on
+    return REQ_HUB_CONNECT_ERROR;                       //Stop here, no reason to move on
   client.println("PUT " + _Path + " HTTP/1.1");
   client.println("Content-Length: " + String(_Json.length()));
   client.println("Content-Type: application/json");

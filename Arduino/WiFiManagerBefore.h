@@ -41,10 +41,10 @@
 //const String WiFiManager_VariableNames[] = {"SSID", "Password", "Custom variable Name 1"};
 //const int EEPROM_size = 255;                                  //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
 
-//#define WiFiManagerUser_Name_Defined
-//char Name[16] = "ESP32";                                      //If you want to define the name somewhere else use 'char* Name = Name'
+#define WiFiManagerUser_Name_Defined
+char Name[16] = "ESP32";                                        //If you want to define the name somewhere else use 'char* Name = Name'
 
-//#define WiFiManager_mDNS                                      //Set up mDNS, this makes it so it responce to the url 'http://name.local/'
+#define WiFiManager_mDNS                                        //Set up mDNS, this makes it so it responce to the url 'http://name.local/'
 
 //#define WiFiManager_OTA                                       //Define if you want to use the Over The Air update page (/ota)
 //#define WiFiManagerUser_UpdateWebpage_Defined
