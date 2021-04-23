@@ -9,14 +9,14 @@
 
 #include "WiFiManagerBefore.h"                                  //Define what options to use/include or to hook into WiFiManager
 #include "WiFiManager/WiFiManager.h"                            //Includes <WiFi> and <WebServer.h> and setups up 'WebServer server(80)' if needed
-#include "WiFiManagerLater.h"                                   //Define options of WiFiManager (can also be done before), but WiFiManager can also be called here (example for DoRequest)
-
-void setup() {
-  Serial.begin(115200);
+#include "WiFiManagerLater.h"                                   //Define options of WiFiManager (can also be done before), but WiFiManager can also be called here (example for DoRequest included here)
+																  
+void setup() {                                                    
+  Serial.begin(115200);                                           
   //server.on("/url", CodeToCall);                              //Example of a url to function caller, These must be declaired before "WiFiManager.Start()"
-  byte Answer = WiFiManager.Start();                            //run the wifi startup (and save results)
-  Serial.println("WiFi setup executed with responce code '" + String(Answer) + "'");  //The return codes can be found in "WiFiManager.cpp" in "CWiFiManager::Start("
+  byte Answer = WiFiManager.Start();                            //Run the wifi startup (and save results)
+  Serial.println("WiFi setup executed with responce code '" + String(Answer) + "'"); //The return codes can be found in "WiFiManager.cpp" in "CWiFiManager::Start("
 }
 void loop() {
-  //WiFiManager.RunServer();                                    //Do WIFI server stuff if needed. Only uncomment this if you need the server. You must have started the server before this with 'WiFiManager.Start()', Also required for OTA and such
+  //WiFiManager.RunServer();                                    //Do WIFI server stuff if needed. Only uncomment this if you need the server
 }

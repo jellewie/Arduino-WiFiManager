@@ -33,26 +33,26 @@
 #define WiFiManagerUser_Status_Blink_Defined                    //^
 #define WiFiManagerUser_Status_StartAP_Defined                  //^
 #define WiFiManagerUser_HandleAP_Defined                        //^
-
+																
 #define WiFiManager_DoRequest                                   //Adds a simple way to do stable URL request (with optional json)
 #define WiFiManager_Restart                                     //Adds a simple handle "/restart" to restart the ESP
-
-//#define WiFiManagerUser_VariableNames_Defined                 //Define that we want to use the custom user variables (Dont forget to settup WiFiManager_VariableNames and WiFiManager_Settings)
-//const String WiFiManager_VariableNames[] = {"SSID", "Password", "Custom variable Name 1"};
-//const int EEPROM_size = 255;                                  //Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
-
-#define WiFiManagerUser_Name_Defined
+																
+#define WiFiManagerUser_VariableNames_Defined                   //Define that we want to use the custom user variables (Dont forget to setup WiFiManager_VariableNames and WiFiManager_Settings)
+const String WiFiManager_VariableNames[] = {"SSID", "Password", "name", "Custom variable"};
+const int EEPROM_size = 255;                                  	//Max Amount of chars for 'SSID(16) + PASSWORD(16) + extra custom vars(?) +1(NULL)' defaults to 33
+																
+#define WiFiManagerUser_Name_Defined                            
 char Name[16] = "ESP32";                                        //If you want to define the name somewhere else use 'char* Name = Name'
-
+																
 #define WiFiManager_mDNS                                        //Set up mDNS, this makes it so it responce to the url 'http://name.local/'
-
+																
 //#define WiFiManager_OTA                                       //Define if you want to use the Over The Air update page (/ota)
 //#define WiFiManagerUser_UpdateWebpage_Defined
 //const String UpdateWebpage = ""                               //Set an custom OTA update URL to show the user
-//WiFiManager.RunServer();                                      //Note when using OTA, you need to run the server in your loop
-//WiFiManager.OTA_Enabled = false;                              //Turn off OTA in runtime
+//  WiFiManager.RunServer();                                    //(runtime) Note when using OTA, you need to run the server in your loop
+//  WiFiManager.OTA_Enabled = false;                            //(runtime) Turn off/on OTA
 
-//WiFiManager.EnableSetup(true);                                //Enable the settings, only enabled in APmode by default
-//WiFiManager.WriteEEPROM();                                    //If you want to manually save the settings (EEPROM LIMITED WRITES AVAILIBLE! do not spam)
+//  WiFiManager.EnableSetup(true);                              //(runtime) Enable the settings, only enabled in APmode by default
+//  WiFiManager.WriteEEPROM();                                  //(runtime) If you want to manually save the settings(EEPROM LIMITED WRITES! do not spam)
                                       
 //#define WiFiManager_DNS                                       //Was causing some troubles with stableness, note sure why yet
