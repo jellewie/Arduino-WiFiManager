@@ -403,7 +403,7 @@ void CWiFiManager::RunServer() {
 }
 void CWiFiManager::handle_Connect() {
   if (!SettingsEnabled) return;                                 //If settingscommand is disabled: Stop right away, and do noting
-  String HTML = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><strong>" + String(Name) + " settings</strong><br><br><form action=\"/setup?\" method=\"get\">";
+  String HTML = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><strong>" + String(Name) + " settings</strong><br><br><form action=\"/setup?\" method=\"post\">";
   for (byte i = 1; i < WiFiManager_Settings + 1; i++)
     HTML += "<div><label>" + WiFiManager_VariableNames[i - 1] + " </label><input type=\"text\" name=\"" + i + "\" value=\"" + Get_Value(i, false, true) + "\"></div>";
   HTML += "<button>Send</button></form>"
