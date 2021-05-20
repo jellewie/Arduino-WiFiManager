@@ -407,6 +407,9 @@ void CWiFiManager::handle_Connect() {
   for (byte i = 1; i < WiFiManager_Settings + 1; i++)
     HTML += "<div><label>" + WiFiManager_VariableNames[i - 1] + " </label><input type=\"text\" name=\"" + i + "\" value=\"" + Get_Value(i, false, true) + "\"></div>";
   HTML += "<button>Send</button></form>"
+#ifdef WiFiManager_OTA
+          "<form action=\"/ota\"><button>OTA page</button></form>"
+#endif //WiFiManager_OTA
           "" + String(EEPROM_USED) + "/" + String(EEPROM_size) + " Bytes used<br>"
           "MAC adress = " +  String(WiFi.macAddress());
   server.send(200, "text/html", HTML);
