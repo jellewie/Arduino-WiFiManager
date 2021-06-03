@@ -22,6 +22,12 @@ there are a few ways to do this
 -Goto "196.168.4.1"
 -Fill in WIFI settings, and press SEND. (Data will be saved to EEPROM when it works)
 
+# Notes
+- Tabs (EEPROM_Seperator) will be replaced with spaces " "
+- Emthy fields will be skipped, use a space to clear the input
+- Fields with only char(*) will be skipped
+- All char(") will be displayed as "&quot;" in the HTML page, this would show the char(") but just not that calling Get_Value(Safe=FALSE) will return this
+
 # LED status
 On the ESP there is a LED_BUILDIN this LED reflects some erros
 - **ON** WIFI starts, goes OFF when WIFI setup is successfully completed
