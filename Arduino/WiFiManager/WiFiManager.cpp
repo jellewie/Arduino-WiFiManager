@@ -191,12 +191,11 @@ void CWiFiManager::StartServer() {
 void CWiFiManager::EnableSetup(bool State) {
 #ifdef WiFiManager_SerialEnabled
   if (State) {
+	Serial.print("WM: Settings page online, ip=");
     if (WiFi.status() == WL_CONNECTED)
-      Serial.println("WM: Settings page online");
-    else {
-      Serial.print("WM: Settings page online ip=");
+      Serial.println(WiFi.localIP());
+    else
       Serial.println(WiFi.softAPIP());
-    }
   } else
     Serial.println("WM: Settings page offline");
 #endif //WiFiManager_SerialEnabled
