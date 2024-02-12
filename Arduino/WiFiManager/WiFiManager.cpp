@@ -402,6 +402,10 @@ void CWiFiManager::RunServer() {
   StartServer();                                                //Start server if we havn't yet
   server.handleClient();
 }
+void CWiFiManager::handleClient() {
+  StartServer();                                                //Start server if we havn't yet
+  server.handleClient();
+}
 void CWiFiManager::handle_Connect() {
   if (!SettingsEnabled) return;                                 //If settingscommand is disabled: Stop right away, and do noting
   String HTML = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\"><strong>" + String(Name) + " settings</strong><br><br><form action=\"/setup?\" method=\"post\">";
@@ -510,7 +514,7 @@ void CWiFiManager::handle_update2() {
 }
 #endif //WiFiManager_OTA
 #ifdef WiFiManager_DoRequest
-byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json, byte TimeOut, String _Header, String _Method) {
+byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json, byte TimeOut, String _Header) {
   /* Returns:
     0= Unknown error (responce out of range)  REQ_UNK
     1= Done (responce code 200)               REQ_SUCCES
@@ -521,7 +525,7 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
     10-19= Unknown server error (first digit Responce=X-10, for example 4 means an 4## client error (like 403 Forbidden))
   */
 #ifdef WiFiManager_SerialEnabled
-  Serial.println("WM_REQ: DO REQUEST: " + String(_IP) + ":" + _Port + _Path + " _ExtraHeader=" + _Header + " _Json=" + _Json + " _Method=" + _Method);
+  Serial.println("WM_REQ: DO REQUEST: " + String(_IP) + ":" + _Port + _Path + " _ExtraHeader=" + _Header + "_Data=" + _Json);
 #endif //WiFiManager_SerialEnabled
 
   if (!WiFiManager.CheckAndReconnectIfNeeded(false))
@@ -530,17 +534,14 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
   client.setTimeout(TimeOut);
   if (!client.connect(_IP, _Port))
     return REQ_HUB_CONNECT_ERROR;                               //Stop here, no reason to move on
-  client.println(_Method + " " + _Path + " HTTP/1.1");
+  client.println("PUT " + _Path + " HTTP/1.1");
+  client.println("Content-Length: " + String(_Json.length()));
+  client.println("Content-Type: application/json");
   if (_Header != ""){
-	_Header.replace("\\r\\n", String(char(0x0d)) + String(char(0x0a)));	//Replace line enters with proper ones
 	client.println(_Header);
   }
-  if (_Json != "") {
-    client.println("Content-Type: application/json");
-    client.println("Content-Length: " + String(_Json.length()));
-    client.println();                                             //Terminate headers with a blank line
-    client.print(_Json);
-  }
+  client.println();                                             //Terminate headers with a blank line
+  client.print(_Json);
   //Try to look for a responce code 'HTTP/1.1 200 OK' = 200
   int Responcecode  = 0;
   unsigned long StopTime = millis() + 2500;                     //After this amount of time stop waiting for a response, 500ms could be considered a normal response time
@@ -563,7 +564,7 @@ byte CWiFiManager::DoRequest(char _IP[16], int _Port, String _Path, String _Json
       return REQ_TIMEOUT;
     }
   }
-  if (Responcecode >= 200 or Responcecode < 300)
+  if (Responcecode == 200)
     return REQ_SUCCES;
   if (Responcecode == 404)
     return REQ_PAGE_NOT_FOUND;
